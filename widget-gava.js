@@ -178,7 +178,9 @@
             display: flex; align-items: center; justify-content: center; gap: 7px;
             width: 100%; padding: 13px 16px;
             background: transparent; color: var(--c-ink);
-            border: 1.5px solid var(--c-ink); border-radius: 0;
+            /* o tema da loja e todo quadrado; o arredondado aqui e proposital,
+               para o provador se destacar do Comprar logo abaixo (modal usa 14-16px) */
+            border: 1.5px solid var(--c-ink); border-radius: 10px;
             font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
             cursor: pointer; transition: background 0.25s, color 0.25s;
             margin-bottom: 10px; box-sizing: border-box;
