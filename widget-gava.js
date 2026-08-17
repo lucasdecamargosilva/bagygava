@@ -178,11 +178,14 @@
             display: flex; align-items: center; justify-content: center; gap: 7px;
             width: 100%; padding: 13px 16px;
             background: transparent; color: var(--c-ink);
-            /* o tema da loja e todo quadrado; o arredondado aqui e proposital,
-               para o provador se destacar do Comprar logo abaixo (modal usa 14-16px) */
-            border: 1.5px solid var(--c-ink); border-radius: 10px;
+            /* o tema da loja e todo quadrado; o arredondado aqui e proposital, para o
+               provador se destacar do Comprar logo abaixo (o modal usa 14-16px).
+               !important porque o tema da Gava zera o raio de botoes com !important
+               numa folha cross-origin — sem isso a borda volta a ficar reta. */
+            border: 1.5px solid var(--c-ink); border-radius: 10px !important;
             font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
             cursor: pointer; transition: background 0.25s, color 0.25s;
+            white-space: nowrap;
             margin-bottom: 10px; box-sizing: border-box;
         }
         .q-btn-inline-provador:hover { background: var(--c-ink); color: #fff; }
@@ -998,20 +1001,12 @@
             const buyContainer = buyBtn.closest('.product-buy, .row');
             if (buyContainer && buyContainer.parentNode) target = buyContainer;
             target.parentNode.insertBefore(inlineBtn, target);
-            // Encostado na linha do Comprar e com a mesma largura dele, senão o botão
-            // herda a largura da row inteira e fica desproporcional.
-            const casaLargura = function () {
-                const rb = buyBtn.getBoundingClientRect();
-                if (rb.width > 50) {
-                    inlineBtn.style.width = Math.round(rb.width) + 'px';
-                    inlineBtn.style.marginLeft = 'auto';
-                    inlineBtn.style.marginRight = 'auto';
-                }
-                inlineBtn.style.marginBottom = '10px';
-            };
-            requestAnimationFrame(casaLargura);
-            setTimeout(casaLargura, 700);
-            window.addEventListener('resize', casaLargura);
+            // Largura fluida: o botão acompanha o bloco onde foi inserido, alinhando com a
+            // linha do Comprar. Fixar a largura em px (medida do botão de compra) fazia o
+            // provador sair minúsculo e com o texto quebrado em duas linhas, porque a medida
+            // é tirada antes de o grid do tema assentar.
+            inlineBtn.style.width = '100%';
+            inlineBtn.style.marginBottom = '10px';
         } else {
             const variantsContainer = document.querySelector('.js-product-variants');
             if (variantsContainer) {
