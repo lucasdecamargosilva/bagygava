@@ -50,7 +50,24 @@
     }
     // Botão nativo de compra da loja (Dooca/Bagy).
     function findStoreBuyBtn() {
-        return document.querySelector('.product-buy-button, .product-buy button, .product-buy [type="submit"]');
+        // '.product-buy button' pegava os botões "−"/"+" da quantidade, e o "Comprar" que
+        // vive dentro do .product-buy está oculto neste tema. Clicar neles não adiciona nada
+        // ao carrinho — o cliente via "Produto adicionado!" sem produto nenhum no carrinho.
+        var SEL = '.quick-buy-action, .product-buy-button, .product-action-buy, .product-buy button, .product-buy [type="submit"], .js-addtocart, .btn-add-to-cart';
+        var RE = /comprar|adicionar|carrinho|add to cart/i;
+        var todos = Array.prototype.slice.call(document.querySelectorAll(SEL));
+        for (var i = 0; i < todos.length; i++) {
+            var el = todos[i];
+            if (el.closest('.dc-decrease, .dc-increase')) continue;
+            if (/dc-decrease|dc-increase|quantity|qty/i.test(el.className || '')) continue;
+            var r = el.getBoundingClientRect();
+            if (r.width < 50 || r.height < 20) continue;
+            var st = getComputedStyle(el);
+            if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') continue;
+            if (!RE.test((el.textContent || '').trim())) continue;
+            return el;
+        }
+        return null;
     }
     // Clique em "Comprar Agora": marca carrinho_adicionado na prova (tracking por telefone)
     // e aciona o botão nativo da loja (add-to-cart do Dooca).
@@ -61,10 +78,21 @@
             fetch(WEBHOOK_BUY_CLICK, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: _tp, origin: location.origin, produto: _td }) }).catch(function () {});
         } catch (e) {}
         var sb = findStoreBuyBtn();
-        if (sb) { try { sb.click(); } catch (e) {} }
-        // Feedback dentro do provador (a confirmação da loja fica atrás do modal).
-        var _b = document.getElementById('q-btn-buy-now'); if (_b) _b.style.display = 'none';
-        var _s = document.getElementById('q-buy-success'); if (_s) _s.style.display = 'flex';
+        var adicionou = false;
+        if (sb) { try { sb.click(); adicionou = true; } catch (e) {} }
+        if (adicionou) {
+            // Feedback dentro do provador (a confirmação da loja fica atrás do modal).
+            var _b = document.getElementById('q-btn-buy-now'); if (_b) _b.style.display = 'none';
+            var _s = document.getElementById('q-buy-success'); if (_s) _s.style.display = 'flex';
+        } else {
+            // Sem botão da loja para acionar, avisar "adicionado" seria mentira: leva o
+            // cliente até o Comprar da própria página para ele concluir.
+            try { closeModal(); } catch (e) {}
+            try {
+                var alvo = document.querySelector('.product-buy, .product-action') || document.querySelector('h1');
+                if (alvo && alvo.scrollIntoView) alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (e) {}
+        }
     }
     // Mostra o botão no resultado + preenche o preço.
     // Parcelamento (Dooca): plano de cartão do produto (fallback: texto da página).
@@ -473,7 +501,7 @@
         }
         .q-btn-outline:hover { border-color: var(--c-ink); background: var(--c-surface); }
         .q-btn-buy-now {
-            width: 100%; padding: 16px 18px; margin-bottom: 10px;
+            width: 100%; padding: 16px 18px;
             background: var(--c-ink); color: #fff; border: 1px solid var(--c-ink);
             border-radius: 14px; font-family: var(--font-body);
             font-weight: 700; font-size: 15px; letter-spacing: .3px; cursor: pointer;
@@ -1271,7 +1299,6 @@
             b.id = 'q-btn-nova-prova';
             b.className = 'q-btn-outline';
             b.textContent = 'Provar outra foto';
-            b.style.marginTop = '10px';
             b.onclick = _plNovaProva;
             col.appendChild(b);
         }
