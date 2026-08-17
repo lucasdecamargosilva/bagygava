@@ -987,12 +987,20 @@
         // no primeiro que casa o seletor deixava o provador ~200px longe dele, com um app
         // de vídeo no meio. Por isso a escolha considera só botões efetivamente visíveis.
         const SEL_BUY = '.quick-buy-action, .product-buy-button, .product-action-buy, .product-buy button, .product-buy [type="submit"], .js-addtocart, .btn-add-to-cart, [data-component="product.add-to-cart"]';
+        // Visível NÃO basta: o seletor pega também os botões "−" e "+" da quantidade, que
+        // no mobile crescem o suficiente para passar em qualquer teste de tamanho. Com eles
+        // escolhidos o provador ancorava no bloco da quantidade e acabava ABAIXO do Comprar.
+        // O texto é o que de fato distingue um botão de compra.
+        const RE_COMPRA = /comprar|adicionar|carrinho|add to cart/i;
         function isVisivel(el) {
             if (!el) return false;
+            if (el.closest('.dc-decrease, .dc-increase')) return false;
+            if (/dc-decrease|dc-increase|quantity|qty/i.test(el.className || '')) return false;
             const r = el.getBoundingClientRect();
             if (r.width < 50 || r.height < 20) return false;
             const st = getComputedStyle(el);
-            return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
+            if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') return false;
+            return RE_COMPRA.test((el.textContent || '').trim());
         }
         // Largura fluida: acompanha o bloco onde for inserido. Fixar em px (medindo o botão
         // de compra) saía minúsculo e com o texto quebrado, porque a medida é tirada antes
