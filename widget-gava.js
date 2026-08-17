@@ -1301,7 +1301,11 @@
             b.className = 'q-btn-outline';
             b.textContent = 'Provar outra foto';
             b.onclick = _plNovaProva;
-            col.appendChild(b);
+            // logo abaixo do "Comprar Agora" e antes das recomendacoes — com appendChild
+            // ele caia no fim da coluna, depois da lista de produtos relacionados.
+            var recs = document.getElementById('q-related-products');
+            if (recs && recs.parentNode === col) col.insertBefore(b, recs);
+            else col.appendChild(b);
         }
 
         var _plCloseOriginal = closeModal;
