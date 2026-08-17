@@ -282,7 +282,7 @@
         #q-header-provador h1 {
             margin: 0;
             font-family: var(--font-display);
-            font-size: 28px; letter-spacing: 4px;
+            font-size: 20px; letter-spacing: 2.5px;
             color: var(--c-ink); text-transform: uppercase;
             font-weight: 400; line-height: 1;
         }
@@ -322,7 +322,8 @@
             display: block; width: 100%; height: 52px;
             padding: 0 16px; margin: 0;
             background: var(--c-surface); border: 1.5px solid var(--c-line);
-            border-radius: 14px;
+            /* !important: o tema da loja zera o raio de input numa folha cross-origin */
+            border-radius: 14px !important;
             font-size: 16px; font-family: var(--font-body); font-weight: 400;
             color: var(--c-ink); outline: none;
             -webkit-appearance: none; appearance: none; transition: border-color 0.2s;
@@ -582,7 +583,7 @@
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .q-loading-t1 {
-            font-family: var(--font-display); font-size: 18px; letter-spacing: 4px;
+            font-family: var(--font-display); font-size: 14px; letter-spacing: 2.5px;
             text-transform: uppercase; color: var(--c-ink);
             animation: q-alt-show 3.6s ease-in-out infinite;
         }
