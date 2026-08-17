@@ -994,25 +994,34 @@
             const st = getComputedStyle(el);
             return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
         }
-        const candidatos = Array.prototype.slice.call(document.querySelectorAll(SEL_BUY));
-        const buyBtn = candidatos.filter(isVisivel)[0] || candidatos[0];
-        if (buyBtn) {
-            let target = buyBtn;
-            const buyContainer = buyBtn.closest('.product-buy, .row');
-            if (buyContainer && buyContainer.parentNode) target = buyContainer;
-            target.parentNode.insertBefore(inlineBtn, target);
-            // Largura fluida: o botão acompanha o bloco onde foi inserido, alinhando com a
-            // linha do Comprar. Fixar a largura em px (medida do botão de compra) fazia o
-            // provador sair minúsculo e com o texto quebrado em duas linhas, porque a medida
-            // é tirada antes de o grid do tema assentar.
-            inlineBtn.style.width = '100%';
-            inlineBtn.style.marginBottom = '10px';
-        } else {
-            const variantsContainer = document.querySelector('.js-product-variants');
-            if (variantsContainer) {
-                variantsContainer.parentNode.insertBefore(inlineBtn, variantsContainer.nextSibling);
+        // Largura fluida: acompanha o bloco onde for inserido. Fixar em px (medindo o botão
+        // de compra) saía minúsculo e com o texto quebrado, porque a medida é tirada antes
+        // de o grid do tema assentar.
+        inlineBtn.style.width = '100%';
+        inlineBtn.style.marginBottom = '10px';
+
+        function ancorar() {
+            const candidatos = Array.prototype.slice.call(document.querySelectorAll(SEL_BUY));
+            const buyBtn = candidatos.filter(isVisivel)[0];
+            if (buyBtn) {
+                const target = buyBtn.closest('.product-buy, .row') || buyBtn.parentNode;
+                if (!target || !target.parentNode) return false;
+                if (inlineBtn.nextElementSibling === target) return true;   // já está no lugar
+                target.parentNode.insertBefore(inlineBtn, target);
+                return true;
             }
+            if (inlineBtn.parentNode) return false;   // já colocado em algum lugar; espera o alvo bom
+            const fallback = document.querySelector('.product-buy') || document.querySelector('.js-product-variants');
+            if (fallback && fallback.parentNode) fallback.parentNode.insertBefore(inlineBtn, fallback);
+            return false;
         }
+        // O tema renderiza o botão de compra em dois tempos, e no mobile ele só aparece
+        // depois — sem reavaliar, o provador ficava preso no fallback e acabava ABAIXO do
+        // Comprar. As repetições movem o botão assim que o alvo definitivo existe.
+        ancorar();
+        setTimeout(ancorar, 800);
+        setTimeout(ancorar, 2500);
+        window.addEventListener('load', ancorar);
         const genBtn      = document.getElementById('q-btn-generate');
         const nextBtn     = null; // single-step flow — no next button
         const phoneStep   = null;
