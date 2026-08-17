@@ -975,13 +975,41 @@
             openModal();
         });
 
-        // Posiciona acima do botão de compra
-        const buyBtn = document.querySelector('.product-buy-button, .product-buy button, .product-buy [type="submit"], .js-addtocart, .btn-add-to-cart, [data-component="product.add-to-cart"]');
+        // Posiciona logo acima do botão de compra.
+        // No tema da Gava o .product-buy guarda só o seletor de quantidade — os botões
+        // "Comprar"/"Em Breve" dentro dele ficam ocultos (width/height 0) e o botão que o
+        // cliente realmente clica é o .quick-buy-action, bem mais abaixo na página. Ancorar
+        // no primeiro que casa o seletor deixava o provador ~200px longe dele, com um app
+        // de vídeo no meio. Por isso a escolha considera só botões efetivamente visíveis.
+        const SEL_BUY = '.quick-buy-action, .product-buy-button, .product-action-buy, .product-buy button, .product-buy [type="submit"], .js-addtocart, .btn-add-to-cart, [data-component="product.add-to-cart"]';
+        function isVisivel(el) {
+            if (!el) return false;
+            const r = el.getBoundingClientRect();
+            if (r.width < 50 || r.height < 20) return false;
+            const st = getComputedStyle(el);
+            return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
+        }
+        const candidatos = Array.prototype.slice.call(document.querySelectorAll(SEL_BUY));
+        const buyBtn = candidatos.filter(isVisivel)[0] || candidatos[0];
         if (buyBtn) {
             let target = buyBtn;
             const buyContainer = buyBtn.closest('.product-buy, .row');
             if (buyContainer && buyContainer.parentNode) target = buyContainer;
             target.parentNode.insertBefore(inlineBtn, target);
+            // Encostado na linha do Comprar e com a mesma largura dele, senão o botão
+            // herda a largura da row inteira e fica desproporcional.
+            const casaLargura = function () {
+                const rb = buyBtn.getBoundingClientRect();
+                if (rb.width > 50) {
+                    inlineBtn.style.width = Math.round(rb.width) + 'px';
+                    inlineBtn.style.marginLeft = 'auto';
+                    inlineBtn.style.marginRight = 'auto';
+                }
+                inlineBtn.style.marginBottom = '10px';
+            };
+            requestAnimationFrame(casaLargura);
+            setTimeout(casaLargura, 700);
+            window.addEventListener('resize', casaLargura);
         } else {
             const variantsContainer = document.querySelector('.js-product-variants');
             if (variantsContainer) {
