@@ -731,7 +731,7 @@
                     <!-- Persistent header (all steps) -->
                     <div id="q-header-provador">
                         <h1>Provador Virtual</h1>
-                        <img src="https://cdn.dooca.store/183804/files/2-3-3.png?v=1765216844" alt="Gava Eyewear" style="height:22px;width:auto;"/>
+                        <img src="https://cdn.dooca.store/183804/files/2-3-3.png?v=1765216844" alt="Gava Eyewear" style="height:38px;width:auto;"/>
                     </div>
 
                     <!-- Main step -->
