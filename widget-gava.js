@@ -873,6 +873,9 @@
 
 
     function init() {
+        // Kill switch: true = provador fora da loja (pausado a pedido em 25/09/2026). Religar = false.
+        var PL_PROVADOR_OFF = true;
+        if (PL_PROVADOR_OFF) return;
         // --- FILTRO DE CATEGORIA (HAT) ---
         const productNameNormalized = (document.querySelector('h1.product__title,.product-single__title,h1')?.innerText || document.title).toUpperCase();
         if (productNameNormalized.includes('HAT')) {
