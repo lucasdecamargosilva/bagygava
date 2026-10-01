@@ -1750,7 +1750,7 @@
 
         // Kill switch: true = provador fora da loja (pausado a pedido em 25/09/2026). Religar = false.
 
-        var PL_PROVADOR_OFF = true;
+        var PL_PROVADOR_OFF = false;
 
         if (PL_PROVADOR_OFF) return;
 
