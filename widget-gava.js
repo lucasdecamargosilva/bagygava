@@ -2222,7 +2222,9 @@
 
 
 
-        function extractImages() {
+        function extractImages(maxN) {
+
+            maxN = maxN || 4;
 
             const containersSelectors = '.js-product-slide, .product-image-column, .js-swiper-product, [data-store^="product-image-"], .product__media-wrapper, .product-gallery__media, .product__media, .product-image-main, .product-media-container, [data-media-id], .product__media-item, .product-gallery, .product-single__media, .media-gallery, [data-component="product.gallery"], .swiper-slide:not(.swiper-slide-duplicate), .slider-wrapper';
 
@@ -2314,7 +2316,7 @@
 
             }
 
-            return uniqueImgs.slice(0, 4);
+            return uniqueImgs.slice(0, maxN);
 
         }
 
@@ -2420,41 +2422,71 @@
 
         }
 
-        async function _plDetectFaces(urls) {
+        // Regra 05/10/2026: varre ate 12 fotos da galeria (era 4) e guarda ate 6 rostos;
+        // _faceUrlsBig = rostos com >=400px (preferidos no envio). Publica parcial nos globais
+        // (se estourar o timeout de 4s no envio, usa o que ja achou), mas so se ainda for a
+        // varredura da galeria atual (_faceGen) — galeria trocada descarta resultado antigo.
+        async function _plDetectFaces(urls, gen) {
 
-            if (!urls || !urls.length) return _faceUrls;
+            var faces = [], big = [];
+
+            if (!urls || !urls.length) return { faces: faces, big: big };
 
             var det = await getFaceDetector();
 
-            if (!det) return _faceUrls;
+            if (!det) return { faces: faces, big: big };
 
-            for (var i = 0; i < urls.length && _faceUrls.length < 4; i++) {
+            for (var i = 0; i < urls.length && faces.length < 6; i++) {
 
                 var img = await _plLoadCorsImg(urls[i]);
 
                 if (!img) continue;
 
-                if (await _plImgHasFace(det, img)) _faceUrls.push(urls[i]);
+                if (await _plImgHasFace(det, img)) {
+
+                    faces.push(urls[i]);
+
+                    if ((img.naturalWidth || img.width || 0) >= 400) big.push(urls[i]);
+
+                    if (gen === _faceGen) { _faceUrls = faces.slice(); _faceUrlsBig = big.slice(); }
+
+                }
 
             }
 
-            return _faceUrls;
+            return { faces: faces, big: big };
+
+        }
+
+        // Cache por conjunto de fotos da galeria atual: se a galeria mudar (troca de cor/variante
+        // ou navegacao SPA), refaz a deteccao; senao reaproveita a promise ja rodando.
+        var _faceKey = null, _faceGen = 0, _faceUrlsBig = [];
+
+        function _plGalleryKey(urls) {
+
+            return (urls || []).map(function (u) { return String(u || '').split('?')[0].replace(/-\d+-\d+\.webp|_\d+x\d+/, ''); }).join('|');
 
         }
 
         function startFaceDetect() {
 
-            if (faceDetectPromise) return faceDetectPromise;
-
             var _urls = [];
 
-            try { if (typeof extractImages === 'function') _urls = extractImages().slice(0, 12); } catch (e) {}
+            try { if (typeof extractImages === 'function') _urls = extractImages(12); } catch (e) {}
 
-            faceDetectPromise = _plDetectFaces(_urls).then(function (arr) {
+            var _k = _plGalleryKey(_urls);
 
-                if (arr && arr.length) { try { console.log('[PL] fotos no rosto detectadas:', arr.length); } catch (e) {} }
+            if (faceDetectPromise && (_k === _faceKey || !_k)) return faceDetectPromise;
 
-                return arr;
+            _faceKey = _k; var _gen = ++_faceGen; _faceUrls = []; _faceUrlsBig = [];
+
+            faceDetectPromise = _plDetectFaces(_urls, _gen).then(function (r) {
+
+                if (_gen === _faceGen) { _faceUrls = r.faces; _faceUrlsBig = r.big; }
+
+                if (r.faces.length) { try { console.log('[PL] fotos no rosto detectadas:', r.faces.length, '(>=400px:', r.big.length + ')'); } catch (e) {} }
+
+                return r.faces;
 
             }).catch(function () { return _faceUrls; });
 
@@ -3754,15 +3786,13 @@ const fd = new FormData();
 
                 } catch (_) {}
 
-                    // Detecção de rosto: manda 1 foto no rosto como PRINCIPAL (o gerador usa pra
-
-                    // calibrar a proporção/tamanho do óculos) + as fotos de fundo branco (packshot),
-
-                    // que mostram os detalhes da armação. Assim garante proporção E detalhe.
-
-                    // Sem rosto detectado → mantém as fotos default (fallback, sem regressão).
-
+                    // Regra 05/10/2026 (Lucas, igual Menina Flor): PREFERENCIA pra foto no rosto.
+                    // 3+ fotos no rosto -> manda exatamente 3 no rosto (>=400px primeiro).
+                    // 1-2 no rosto -> manda essas + completa ate 3 com fotos de fundo branco do
+                    // MESMO produto. Sem rosto detectado -> mantém as fotos default (fallback, sem regressão).
                     try {
+
+                        try { startFaceDetect(); } catch (e) {}   // refaz se a galeria mudou
 
                         if (faceDetectPromise) { await Promise.race([faceDetectPromise, new Promise(function (r) { setTimeout(r, 4000); })]); }
 
@@ -3770,25 +3800,21 @@ const fd = new FormData();
 
                             var _key = function (u) { return String(u || '').split('?')[0]; };
 
-                            var _faceKeys = {};
+                            var _fc = _faceUrls.slice(), _bg = _faceUrlsBig.slice();
 
-                            _faceUrls.forEach(function (u) { _faceKeys[_key(u)] = 1; });
+                            var _rostos = _bg.concat(_fc.filter(function (u) { return _bg.indexOf(u) === -1; }));
 
-                            var _packshots = allProdImgs.filter(function (u) { return !_faceKeys[_key(u)]; });
+                            var _sel = _rostos.slice(0, 3);
 
-                            var _mix = [];
+                            if (_sel.length < 3) {
 
-                            var _add = function (u) { if (u && !_mix.some(function (x) { return _key(x) === _key(u); })) _mix.push(u); };
+                                var _fundo = extractImages(12).filter(function (u) { return !_fc.some(function (f) { return _key(f) === _key(u); }); });
 
-                            _add(_faceUrls[0]);
+                                _fundo.forEach(function (u) { if (_sel.length < 3 && !_sel.some(function (x) { return _key(x) === _key(u); })) _sel.push(u); });
 
-                            _packshots.forEach(_add);
+                            }
 
-                            _faceUrls.slice(1).forEach(_add);
-
-                            allProdImgs.forEach(_add);
-
-                            allProdImgs = _mix;
+                            allProdImgs = _sel;
 
                         }
 
