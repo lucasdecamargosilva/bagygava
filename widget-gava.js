@@ -1776,7 +1776,7 @@ setInterval(function(){var el=document.getElementById('q-step-error');if(!el)ret
 
         // Kill switch: true = provador fora da loja (pausado a pedido em 25/09/2026). Religar = false.
 
-        var PL_PROVADOR_OFF = false;
+        var PL_PROVADOR_OFF = true; // desligado 16/11/2026 a pedido do Lucas
 
         if (PL_PROVADOR_OFF) return;
 
