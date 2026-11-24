@@ -409,9 +409,11 @@ setInterval(function(){var el=document.getElementById('q-step-error');if(!el)ret
 
             background: transparent; color: var(--c-ink);
 
-            border: 1.5px solid var(--c-ink); border-radius: 0;
+            border: 1.5px solid var(--c-ink); border-radius: 5px;
 
-            font-family: 'Work Sans', var(--font-body), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+            /* 24/11/2026: mesmo formato e altura do botão Comprar da loja (Poppins 16/700, 48px, cantos 5px) */
+            min-height: 48px; padding: 0 16px;
+            font-family: Poppins, var(--font-body), sans-serif; font-size: 16px; font-weight: 700; letter-spacing: normal; text-transform: none;
 
             cursor: pointer; transition: background 0.25s, color 0.25s;
 
@@ -421,7 +423,7 @@ setInterval(function(){var el=document.getElementById('q-step-error');if(!el)ret
 
         .q-btn-inline-provador:hover { background: var(--c-ink); color: #fff; }
 
-        .q-btn-inline-provador svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .q-btn-inline-provador svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 
 
@@ -2175,6 +2177,16 @@ setInterval(function(){var el=document.getElementById('q-step-error');if(!el)ret
 
 
 
+        // 24/11/2026: o tema da Loja Integrada remonta a galeria depois do carregamento e o selo
+        // sumia junto. Confere de tempos em tempos e recoloca o selo sobre a foto do produto.
+        setInterval(() => {
+            const gal = document.querySelector('.produtos-img');
+            if (!gal || !gal.querySelector('img')) return;
+            if (openBtn.isConnected && openBtn.parentElement === gal) return;
+            if (window.getComputedStyle(gal).position === 'static') gal.style.position = 'relative';
+            openBtn.style.cssText = '';
+            gal.appendChild(openBtn);
+        }, 1500);
         const modal = document.getElementById('q-modal-ia');
 
 
