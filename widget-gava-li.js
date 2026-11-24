@@ -375,7 +375,7 @@ setInterval(function(){var el=document.getElementById('q-step-error');if(!el)ret
 
         .q-btn-trigger-ia {
 
-            position: absolute; top: 8px; right: 14px; z-index: 100;
+            position: absolute; top: 8px; right: 14px; z-index: 4; /* 24/11: abaixo do cabeçalho fixo da loja (com 100 o selo passava por cima ao rolar) */
 
             background: none; border: none; padding: 0; cursor: pointer;
 
